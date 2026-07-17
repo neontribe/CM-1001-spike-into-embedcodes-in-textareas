@@ -7,7 +7,7 @@
   <style>
     body {
       font-family: system-ui, sans-serif;
-      max-width: 720px;
+      max-width: 1000px;
       margin: 2rem auto;
       padding: 0 1rem;
       color: #1d1d1d;
@@ -43,12 +43,12 @@
   </style>
 </head>
 <body>
-  <h1>Textarea cursor / click detection PoC</h1>
+  <h1>Embedcode as a character PoC</h1>
   <p>Click inside the textarea, move the cursor with arrow keys, or select text. The panels below update with the caret position (character index, line, column).</p>
 
   <div style="margin-bottom: 1rem; padding: 0.75rem; background: #f8f8f8; border: 1px solid #b1b4b6;">
     <label for="embedCount" style="margin-right: 0.5rem;">Number of embed codes to inject:</label>
-    <input type="number" id="embedCount" min="1" value="50" style="width: 80px; padding: 0.25rem; margin-right: 0.5rem;">
+    <input type="number" id="embedCount" min="1" value="5" style="width: 80px; padding: 0.25rem; margin-right: 0.5rem;">
     <button id="injectButton" style="padding: 0.25rem 1rem; cursor: pointer;">Inject Embed Codes</button>
   </div>
 
@@ -58,7 +58,7 @@
 
   <textarea
           id="editor"
-          rows="30"
+          rows="15"
   >In alignment with our overarching strategic frameworks, we are proactively initiating a comprehensive, cross-functional paradigm shift designed to optimize systemic efficiencies across all vertical operational modalities. By shifting the critical path toward multi-tiered stakeholder integration, the department will effectively incentivize synergistic outcomes that transcend legacy infrastructural silos. Our primary objective remains the holistic recalibration of granular deliverables to maximize scalable output while minimizing mitigating risks within the institutional ecosystem.
 
 Furthermore, the implementation of our new rolling, data-informed accountability matrices will ensure that ongoing procedural iterations are tightly coupled with high-level compliance mandates. This iterative, top-down governance model is fundamentally structurally engineered to foster a culture of agile performance management. Through the continuous mapping of micro-level logistical contingencies, we can execute strategic course corrections that proactively mitigate structural friction points.
@@ -73,14 +73,21 @@ In conclusion, the finalized amalgamation of these disparate operational workflo
   </textarea>
 
   <section>
-    <h2>Embed Codes Found</h2>
-    <pre id="embedFeedback" style="background: #e8f4f8; border-color: #005ea5; color: #0b0c0c;">Scanning...</pre>
-  </section>
-
-  <section>
     <h2>Current caret / selection</h2>
     <pre id="output">(no interaction yet)</pre>
   </section>
+
+  <div style="display: flex; gap: 1rem;">
+    <section style="flex: 1;">
+      <h2>Embed Codes Found</h2>
+      <pre id="embedFeedback" style="background: #e8f4f8; border-color: #005ea5; color: #0b0c0c;">Scanning...</pre>
+    </section>
+
+    <section style="flex: 0 0 250px;">
+      <h2>Parse Performance</h2>
+      <pre id="parsePerformance" style="background: #fff4e6; border-color: #f47738; color: #0b0c0c;">-</pre>
+    </section>
+  </div>
 
   <section>
     <h2>Event log</h2>
@@ -136,9 +143,6 @@ In conclusion, the finalized amalgamation of these disparate operational workflo
         // Trigger input event to update embed code detection
         textarea.dispatchEvent(new Event('input', { bubbles: true }));
       }
-
-      // Initial injection on page load
-      injectEmbedCodes(10);
 
       // Button click handler
       injectButton.addEventListener('click', function() {

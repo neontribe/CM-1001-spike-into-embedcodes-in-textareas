@@ -6,10 +6,13 @@
   "scripts": {
     "build": "tsc",
     "watch": "tsc --watch",
-    "dev": "tsc && http-server -p 8080 -o",
-    "serve": "http-server -p 8080"
+    "serve": "http-server -p 8080",
+    "dev": "npm run build && concurrently \"npm run watch\" \"npm run serve:live\"",
+    "serve:live": "browser-sync start --server --files \"dist/**/*.js, index.html, src/**/*.ts\" --port 8080 --no-notify"
   },
   "devDependencies": {
+    "browser-sync": "^3.0.4",
+    "concurrently": "^10.0.3",
     "http-server": "^14.1.1",
     "typescript": "^5.5.4"
   }

@@ -12,6 +12,13 @@ interface EmbedCodeLocation {
   endIndex: number;
 }
 
+interface EmbedCodeContext {
+  isInEmbedCode: boolean;
+  embedCodeIndex: number | null;
+  embedCodeStartIndex: number | null;
+  embedCodeEndIndex: number | null;
+}
+
 function getCaretInfo(textarea: HTMLTextAreaElement, index: number): CaretInfo {
   const before = textarea.value.slice(0, index);
   const lines = before.split("\n");
@@ -40,16 +47,42 @@ function findEmbedCodes(text: string): EmbedCodeLocation[] {
   return locations;
 }
 
+function getEmbedCodeContext(caretIndex: number, embedCodes: EmbedCodeLocation[]): EmbedCodeContext {
+  for (let i = 0; i < embedCodes.length; i++) {
+    const embed = embedCodes[i];
+    if (caretIndex >= embed.startIndex && caretIndex <= embed.endIndex) {
+      return {
+        isInEmbedCode: true,
+        embedCodeIndex: i,
+        embedCodeStartIndex: embed.startIndex,
+        embedCodeEndIndex: embed.endIndex
+      };
+    }
+  }
+
+  return {
+    isInEmbedCode: false,
+    embedCodeIndex: null,
+    embedCodeStartIndex: null,
+    embedCodeEndIndex: null
+  };
+}
+
 function main(): void {
   const textarea = document.querySelector<HTMLTextAreaElement>("#editor");
   const output = document.querySelector<HTMLPreElement>("#output");
   const log = document.querySelector<HTMLPreElement>("#log");
   const embedFeedback = document.querySelector<HTMLPreElement>("#embedFeedback");
+  const parsePerformance = document.querySelector<HTMLPreElement>("#parsePerformance");
 
-  if (!textarea || !output || !log || !embedFeedback) {
+  if (!textarea || !output || !log || !embedFeedback || !parsePerformance) {
     console.error("Required elements not found in the page.");
     return;
   }
+
+  // Track last key pressed and current embed codes
+  let lastKeyPressed: string = "(none)";
+  let currentEmbedCodes: EmbedCodeLocation[] = [];
 
   const appendLog = (line: string): void => {
     const timestamp = new Date().toLocaleTimeString();
@@ -59,25 +92,25 @@ function main(): void {
   const updateEmbedCodes = (): void => {
     console.log("updateEmbedCodes called");
     const startTime = performance.now();
-    const embedCodes = findEmbedCodes(textarea.value);
+    currentEmbedCodes = findEmbedCodes(textarea.value);
     const endTime = performance.now();
     const duration = (endTime - startTime).toFixed(3);
     
-    console.log(`Found ${embedCodes.length} embed codes in ${duration}ms`);
-    appendLog(`Found ${embedCodes.length} embed code(s) in textarea (${duration}ms)`);
+    console.log(`Found ${currentEmbedCodes.length} embed codes in ${duration}ms`);
+    appendLog(`Found ${currentEmbedCodes.length} embed code(s) in textarea (${duration}ms)`);
 
     // Update feedback section
-    let feedbackText = `Count: ${embedCodes.length} embed code(s)\nIndexing time: ${duration}ms`;
-    if (embedCodes.length > 0) {
+    let feedbackText = `Count: ${currentEmbedCodes.length} embed code(s)\nIndexing time: ${duration}ms`;
+    if (currentEmbedCodes.length > 0) {
       feedbackText += `\n\nPositions:`;
-      embedCodes.forEach((loc, idx) => {
+      currentEmbedCodes.forEach((loc, idx) => {
         feedbackText += `\n${idx + 1}. [${loc.startIndex}-${loc.endIndex}] ${loc.embedCode}`;
       });
     }
     embedFeedback.textContent = feedbackText;
 
-    if (embedCodes.length > 0) {
-      const details = embedCodes.map(loc =>
+    if (currentEmbedCodes.length > 0) {
+      const details = currentEmbedCodes.map(loc =>
         `  ${loc.embedCode} [${loc.startIndex}-${loc.endIndex}]`
       ).join('\n');
       console.log(`Embed codes found:\n${details}`);
@@ -90,9 +123,28 @@ function main(): void {
     const hasSelection = selectionEnd !== textarea.selectionStart;
 
     let text = formatInfo(label, caret);
+    
+    // Add last key pressed
+    text += `\nLast key pressed: ${lastKeyPressed}`;
+
+    // Check if caret is inside an embed code
+    const startTime = performance.now();
+    const embedContext = getEmbedCodeContext(textarea.selectionStart, currentEmbedCodes);
+    const endTime = performance.now();
+    const duration = (endTime - startTime).toFixed(3);
+
+    // Update parse performance display
+    parsePerformance.textContent = `Context parse time: ${duration}ms\n\nEmbed codes indexed: ${currentEmbedCodes.length}`;
+
+    text += `\n\nInside embed code: ${embedContext.isInEmbedCode}`;
+    if (embedContext.isInEmbedCode) {
+      text += `\nEmbed code index: ${embedContext.embedCodeIndex}`;
+      text += `\nEmbed code range: [${embedContext.embedCodeStartIndex}-${embedContext.embedCodeEndIndex}]`;
+    }
+
     if (hasSelection) {
       const endCaret = getCaretInfo(textarea, selectionEnd);
-      text += `\nSelection end: index=${endCaret.index}, line=${endCaret.line}, column=${endCaret.column}`;
+      text += `\n\nSelection end: index=${endCaret.index}, line=${endCaret.line}, column=${endCaret.column}`;
       text += `\nSelected text: ${JSON.stringify(textarea.value.slice(textarea.selectionStart, selectionEnd))}`;
     }
 
@@ -106,6 +158,11 @@ function main(): void {
     appendLog(
       `click at page(${event.pageX}, ${event.pageY}) -> caret index ${textarea.selectionStart}`
     );
+  });
+
+  // Track key pressed
+  textarea.addEventListener("keydown", (event: KeyboardEvent) => {
+    lastKeyPressed = event.key;
   });
 
   // Keyboard-driven cursor movement (arrow keys, home/end, typing, etc).

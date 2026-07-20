@@ -19,6 +19,21 @@ interface EmbedCodeContext {
   embedCodeEndIndex: number | null;
 }
 
+interface SelectionEmbedContext {
+  hasEmbedCodes: boolean;
+  embedCodesInSelection: EmbedCodeIntersection[];
+  fullyContainedCount: number;
+  partiallyContainedCount: number;
+}
+
+interface EmbedCodeIntersection {
+  embedCodeIndex: number;
+  embedCode: string;
+  embedCodeStartIndex: number;
+  embedCodeEndIndex: number;
+  intersectionType: 'full' | 'partial-start' | 'partial-end' | 'partial-middle';
+}
+
 function getCaretInfo(textarea: HTMLTextAreaElement, index: number): CaretInfo {
   const before = textarea.value.slice(0, index);
   const lines = before.split("\n");
@@ -68,6 +83,58 @@ function getEmbedCodeContext(caretIndex: number, embedCodes: EmbedCodeLocation[]
   };
 }
 
+function getSelectionEmbedContext(selectionStart: number, selectionEnd: number, embedCodes: EmbedCodeLocation[]): SelectionEmbedContext {
+  const embedCodesInSelection: EmbedCodeIntersection[] = [];
+  let fullyContainedCount = 0;
+  let partiallyContainedCount = 0;
+
+  for (let i = 0; i < embedCodes.length; i++) {
+    const embed = embedCodes[i];
+
+    // Check if there's any overlap between selection and embed code
+    // Overlap occurs if: selectionStart < embedEnd AND selectionEnd > embedStart
+    if (selectionStart < embed.endIndex && selectionEnd > embed.startIndex) {
+      let intersectionType: 'full' | 'partial-start' | 'partial-end' | 'partial-middle';
+
+      // Fully contained: selection completely covers the embed code
+      if (selectionStart <= embed.startIndex && selectionEnd >= embed.endIndex) {
+        intersectionType = 'full';
+        fullyContainedCount++;
+      }
+      // Partial start: selection starts inside embed code but ends after it
+      else if (selectionStart > embed.startIndex && selectionStart < embed.endIndex && selectionEnd >= embed.endIndex) {
+        intersectionType = 'partial-start';
+        partiallyContainedCount++;
+      }
+      // Partial end: selection starts before embed code and ends inside it
+      else if (selectionStart <= embed.startIndex && selectionEnd > embed.startIndex && selectionEnd < embed.endIndex) {
+        intersectionType = 'partial-end';
+        partiallyContainedCount++;
+      }
+      // Partial middle: selection is entirely within the embed code
+      else {
+        intersectionType = 'partial-middle';
+        partiallyContainedCount++;
+      }
+
+      embedCodesInSelection.push({
+        embedCodeIndex: i,
+        embedCode: embed.embedCode,
+        embedCodeStartIndex: embed.startIndex,
+        embedCodeEndIndex: embed.endIndex,
+        intersectionType
+      });
+    }
+  }
+
+  return {
+    hasEmbedCodes: embedCodesInSelection.length > 0,
+    embedCodesInSelection,
+    fullyContainedCount,
+    partiallyContainedCount
+  };
+}
+
 function main(): void {
   const textarea = document.querySelector<HTMLTextAreaElement>("#editor");
   const output = document.querySelector<HTMLPreElement>("#output");
@@ -84,6 +151,11 @@ function main(): void {
   // Track last key pressed and current embed codes
   let lastKeyPressed: string = "(none)";
   let currentEmbedCodes: EmbedCodeLocation[] = [];
+
+  // Track selection method
+  let isMouseDown: boolean = false;
+  let lastSelectionMethod: string = "unknown";
+  let isShiftPressed: boolean = false;
 
   const appendLog = (line: string): void => {
     const timestamp = new Date().toLocaleTimeString();
@@ -118,7 +190,7 @@ function main(): void {
     }
   };
 
-  const renderCurrentCaret = (label: string, eventDetail?: string): void => {
+  const renderCurrentCaret = (label: string, eventDetail?: string, selectionMethod?: string): void => {
     const caret = getCaretInfo(textarea, textarea.selectionStart);
     const selectionEnd = textarea.selectionEnd;
     const hasSelection = selectionEnd !== textarea.selectionStart;
@@ -133,6 +205,9 @@ function main(): void {
     }
     if (label === "Key") {
       text += `\nKey pressed: ${lastKeyPressed}`;
+    }
+    if (selectionMethod) {
+      text += `\nSelection method: ${selectionMethod}`;
     }
 
     // Check if caret is inside an embed code
@@ -150,8 +225,50 @@ function main(): void {
       text += `\nEmbed code range: [${embedContext.embedCodeStartIndex}-${embedContext.embedCodeEndIndex}]`;
     }
 
+    // Check for selection containing embed codes
+    let selectionEmbedContext: SelectionEmbedContext | null = null;
+    if (hasSelection) {
+      const endCaret = getCaretInfo(textarea, selectionEnd);
+      text += `\n\n=== SELECTION INFO ===`;
+      text += `\nSelection end: index=${endCaret.index}, line=${endCaret.line}, column=${endCaret.column}`;
+      text += `\nSelection length: ${selectionEnd - textarea.selectionStart} characters`;
+      text += `\nSelected text: ${JSON.stringify(textarea.value.slice(textarea.selectionStart, selectionEnd))}`;
+
+      // Check for embed codes in selection
+      selectionEmbedContext = getSelectionEmbedContext(textarea.selectionStart, selectionEnd, currentEmbedCodes);
+
+      text += `\n\n=== EMBED CODES IN SELECTION ===`;
+      text += `\nContains embed codes: ${selectionEmbedContext.hasEmbedCodes}`;
+      if (selectionEmbedContext.hasEmbedCodes) {
+        text += `\nTotal embed codes affected: ${selectionEmbedContext.embedCodesInSelection.length}`;
+        text += `\n  - Fully contained: ${selectionEmbedContext.fullyContainedCount}`;
+        text += `\n  - Partially contained: ${selectionEmbedContext.partiallyContainedCount}`;
+        text += `\n\nDetails:`;
+        selectionEmbedContext.embedCodesInSelection.forEach((intersection, idx) => {
+          text += `\n  ${idx + 1}. [${intersection.embedCodeStartIndex}-${intersection.embedCodeEndIndex}] ${intersection.intersectionType}`;
+          text += `\n     ${intersection.embedCode}`;
+        });
+      }
+    }
+
     // Update the caret/embed indicator panel next to the Reset button
-    if (embedContext.isInEmbedCode) {
+    if (hasSelection && selectionEmbedContext && selectionEmbedContext.hasEmbedCodes) {
+      let msg = `Yes - Selection contains ${selectionEmbedContext.embedCodesInSelection.length} embed code(s)`;
+      if (selectionEmbedContext.fullyContainedCount > 0) {
+        msg += ` (${selectionEmbedContext.fullyContainedCount} full`;
+        if (selectionEmbedContext.partiallyContainedCount > 0) {
+          msg += `, ${selectionEmbedContext.partiallyContainedCount} partial`;
+        }
+        msg += `)`;
+      } else {
+        msg += ` (${selectionEmbedContext.partiallyContainedCount} partial)`;
+      }
+      if (selectionMethod) {
+        msg += ` - via ${selectionMethod}`;
+      }
+      caretEmbedStatus.textContent = msg;
+      caretEmbedStatus.style.color = "#00703c";
+    } else if (embedContext.isInEmbedCode) {
       let msg = "Yes - ";
       if (label === "Key") {
         msg += lastKeyPressed;
@@ -166,14 +283,31 @@ function main(): void {
       caretEmbedStatus.style.color = "#d4351c";
     }
 
-    if (hasSelection) {
-      const endCaret = getCaretInfo(textarea, selectionEnd);
-      text += `\n\nSelection end: index=${endCaret.index}, line=${endCaret.line}, column=${endCaret.column}`;
-      text += `\nSelected text: ${JSON.stringify(textarea.value.slice(textarea.selectionStart, selectionEnd))}`;
-    }
-
     output.textContent = text;
   };
+
+  // Track mouse down/up for drag detection
+  textarea.addEventListener("mousedown", () => {
+    isMouseDown = true;
+    lastSelectionMethod = "mouse drag";
+  });
+
+  textarea.addEventListener("mouseup", () => {
+    isMouseDown = false;
+  });
+
+  // Track shift key state globally
+  document.addEventListener("keydown", (event: KeyboardEvent) => {
+    if (event.key === "Shift") {
+      isShiftPressed = true;
+    }
+  });
+
+  document.addEventListener("keyup", (event: KeyboardEvent) => {
+    if (event.key === "Shift") {
+      isShiftPressed = false;
+    }
+  });
 
   // Mouse click: fires after the browser has already moved the caret,
   // so selectionStart/selectionEnd reflect the click position.
@@ -187,18 +321,45 @@ function main(): void {
   // Track key pressed
   textarea.addEventListener("keydown", (event: KeyboardEvent) => {
     lastKeyPressed = event.key;
+    
+    // Detect shift + arrow keys for keyboard selection
+    if (event.shiftKey && (event.key === "ArrowLeft" || event.key === "ArrowRight" || 
+                            event.key === "ArrowUp" || event.key === "ArrowDown" ||
+                            event.key === "Home" || event.key === "End" ||
+                            event.key === "PageUp" || event.key === "PageDown")) {
+      lastSelectionMethod = "Shift + " + event.key;
+    }
   });
 
   // Keyboard-driven cursor movement (arrow keys, home/end, typing, etc).
-  textarea.addEventListener("keyup", () => {
-    renderCurrentCaret("Key", `Keyboard interaction`);
+  textarea.addEventListener("keyup", (event: KeyboardEvent) => {
+    const hasSelection = textarea.selectionStart !== textarea.selectionEnd;
+    let method = undefined;
+    
+    if (hasSelection && event.shiftKey) {
+      method = lastSelectionMethod;
+    }
+    
+    renderCurrentCaret("Key", `Keyboard interaction`, method);
   });
 
   // Catches selection changes not covered above (e.g. select-all via menu,
   // drag-selecting with the mouse).
   document.addEventListener("selectionchange", () => {
     if (document.activeElement !== textarea) return;
-    renderCurrentCaret("Selection", "Selection changed (drag-select, select-all, or other)");
+    
+    const hasSelection = textarea.selectionStart !== textarea.selectionEnd;
+    let method = undefined;
+    
+    if (hasSelection) {
+      if (isMouseDown) {
+        method = "mouse drag";
+      } else if (isShiftPressed) {
+        method = lastSelectionMethod;
+      }
+    }
+    
+    renderCurrentCaret("Selection", "Selection changed (drag-select, select-all, or other)", method);
   });
 
   textarea.addEventListener("focus", () => {

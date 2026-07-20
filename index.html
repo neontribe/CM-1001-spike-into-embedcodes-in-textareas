@@ -44,7 +44,7 @@
 </head>
 <body>
   <h1>Embedcode as a character PoC</h1>
-  <p>Click inside the textarea, move the cursor with arrow keys, or select text. The panels below update with the caret position (character index, line, column).</p>
+  <p>Click inside the textarea, move the cursor with arrow keys, or select text (via mouse drag or Shift+cursor keys). The panels below update with the caret position and detect embed codes within selections.</p>
 
   <div style="margin-bottom: 1rem; padding: 0.75rem; background: #f8f8f8; border: 1px solid #b1b4b6;">
     <label for="embedCount" style="margin-right: 0.5rem;">Number of embed codes to inject:</label>
@@ -58,7 +58,7 @@
     </div>
 
     <div id="caretEmbedIndicator" style="padding: 0.75rem; background: #f3f2f1; border: 1px solid #b1b4b6; display: flex; align-items: center; gap: 0.5rem;">
-      <span>Caret in embed code:</span>
+      <span>Caret/Selection in embed code:</span>
       <strong id="caretEmbedStatus">–</strong>
     </div>
   </div>

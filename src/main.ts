@@ -158,6 +158,7 @@ function main(): void {
       } else {
         msg += " Mouse Click";
       }
+      msg += ` - Embed code index: ${embedContext.embedCodeIndex}`;
       caretEmbedStatus.textContent = msg;
       caretEmbedStatus.style.color = "#00703c";
     } else {

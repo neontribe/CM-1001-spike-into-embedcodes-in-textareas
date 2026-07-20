@@ -30,7 +30,7 @@ export class EmbedCodeUtils {
     getEmbedCodeContext(caretIndex: number, embedCodes: EmbedCodeLocation[]): EmbedCodeContext {
         for (let i = 0; i < embedCodes.length; i++) {
             const embed = embedCodes[i];
-            if (caretIndex >= embed.startIndex && caretIndex <= embed.endIndex) {
+            if (caretIndex > embed.startIndex && caretIndex < embed.endIndex) {
                 return {
                     isInEmbedCode: true,
                     embedCodeIndex: i,

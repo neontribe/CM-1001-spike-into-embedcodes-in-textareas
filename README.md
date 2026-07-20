@@ -23,10 +23,9 @@ This project is configured to automatically deploy to GitHub Pages using GitHub 
 3. **View your deployment:**
    - The workflow will automatically run on push to the `main` branch
    - Check the **Actions** tab to monitor the build and deployment
-   - Once complete, your demo will be available at:
-     ```
+   - Once complete, your demo will be available at: 
      https://neontribe.github.io/CM-1001-spike-into-embedcodes-in-textareas/
-     ```
+   
 
 ### Manual Deployment
 

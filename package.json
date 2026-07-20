@@ -6,14 +6,21 @@
   "scripts": {
     "build": "tsc",
     "watch": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "typecheck:watch": "tsc --noEmit --watch",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "serve": "http-server -p 8080",
     "dev": "npm run build && concurrently \"npm run watch\" \"npm run serve:live\"",
     "serve:live": "browser-sync start --server --files \"dist/**/*.js, index.html, src/**/*.ts\" --port 8080 --no-notify"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.5",
     "browser-sync": "^3.0.4",
     "concurrently": "^10.0.3",
+    "eslint": "^9.39.5",
     "http-server": "^14.1.1",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "typescript-eslint": "^8.64.0"
   }
 }

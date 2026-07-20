@@ -31,17 +31,28 @@ function main(): void {
     }
 
     if (actionRequired.selection) {
-      embedFeedback.textContent = "Action required:\nSource: " + source +
+      embedFeedback.textContent = "Selection required:\nSource: " + source +
           "\nMethod: " + method +
           "\nLast Key Pressed: " + lastKeyPressed;
       return;
     } else {
-        if (source === "Click") {
-          const embedCodeLocation: EmbedCodeLocation = currentEmbedCodes[actionRequired.embedCodeIndex];
-          textarea.focus();
-          textarea.setSelectionRange(embedCodeLocation.endIndex, embedCodeLocation.endIndex);
-          return;
-        }
+      if ((source === "Click") || (source === "keyup" && lastKeyPressed === "ArrowRight")) {
+        const embedCodeLocation: EmbedCodeLocation = currentEmbedCodes[actionRequired.embedCodeIndex];
+        textarea.focus();
+        textarea.setSelectionRange(embedCodeLocation.endIndex, embedCodeLocation.endIndex);
+        return;
+      }
+      else if (source === "keyup" && lastKeyPressed === "ArrowLeft") {
+        const embedCodeLocation: EmbedCodeLocation = currentEmbedCodes[actionRequired.embedCodeIndex];
+        textarea.focus();
+        textarea.setSelectionRange(embedCodeLocation.startIndex, embedCodeLocation.startIndex);
+        return;
+      }
+      else {
+        embedFeedback.textContent = "Action required:\nSource: " + source +
+            "\nMethod: " + method +
+            "\nLast Key Pressed: " + lastKeyPressed;
+      }
     }
   }
 
@@ -132,7 +143,7 @@ function main(): void {
   });
 
   textarea.addEventListener("keyup", () => {
-    renderCurrentCaret("Change event triggered");
+    renderCurrentCaret("keyup");
   });
 
   textarea.addEventListener("paste", () => {

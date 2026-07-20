@@ -50,17 +50,7 @@
     <label for="embedCount" style="margin-right: 0.5rem;">Number of embed codes to inject:</label>
     <input type="number" id="embedCount" min="1" value="5" style="width: 80px; padding: 0.25rem; margin-right: 0.5rem;">
     <button id="injectButton" style="padding: 0.25rem 1rem; cursor: pointer;">Inject Embed Codes</button>
-  </div>
-
-  <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
-    <div style="padding: 0.75rem; background: #f8f8f8; border: 1px solid #b1b4b6;">
-      <button style="padding: 0.25rem 1rem; cursor: pointer;" onClick="window.location.reload(true);">Reset</button>
-    </div>
-
-    <div id="caretEmbedIndicator" style="padding: 0.75rem; background: #f3f2f1; border: 1px solid #b1b4b6; display: flex; align-items: center; gap: 0.5rem;">
-      <span>Caret/Selection in embed code:</span>
-      <strong id="caretEmbedStatus">–</strong>
-    </div>
+    <button style="padding: 0.25rem 1rem; cursor: pointer;" onClick="window.location.reload(true);">Reset</button>
   </div>
 
   <textarea
@@ -79,27 +69,17 @@ Concurrently, the deployment of our standardized, dual-hemisphere evaluation met
 In conclusion, the finalized amalgamation of these disparate operational workflows will culminate in a thoroughly homogenized and resilient administrative apparatus. As we transition from theoretical scaffolding to active deployment protocols, the emphasis will invariably remain on the cultivation of sustainable, high-yield operational paradigms. Through this rigorous adherence to systemic modernization, the agency ensures its perpetual readiness to navigate the complexities of an evolving regulatory landscape.
   </textarea>
 
-  <section>
-    <h2>Current caret / selection</h2>
-    <pre id="output">(no interaction yet)</pre>
-  </section>
-
-  <div style="display: flex; gap: 1rem;">
-    <section style="flex: 1;">
+  <div style="display: flex; gap: 1rem; margin-bottom: 1rem">
+    <section style="flex: 1">
       <h2>Embed Codes Found</h2>
       <pre id="embedFeedback" style="background: #e8f4f8; border-color: #005ea5; color: #0b0c0c;">Scanning...</pre>
     </section>
 
-    <section style="flex: 0 0 250px;">
+    <section style="flex: 1">
       <h2>Parse Performance</h2>
       <pre id="parsePerformance" style="background: #fff4e6; border-color: #f47738; color: #0b0c0c;">-</pre>
     </section>
   </div>
-
-  <section>
-    <h2>Event log</h2>
-    <pre id="log"></pre>
-  </section>
 
   <script type="module" src="dist/main.js"></script>
   <script>

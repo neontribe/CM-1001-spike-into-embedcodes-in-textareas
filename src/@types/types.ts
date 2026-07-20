@@ -1,9 +1,3 @@
-export interface CaretInfo {
-  index: number;
-  line: number;
-  column: number;
-}
-
 export interface EmbedCodeLocation {
   embedCode: string;
   startIndex: number;
@@ -12,9 +6,9 @@ export interface EmbedCodeLocation {
 
 export interface EmbedCodeContext {
   isInEmbedCode: boolean;
-  embedCodeIndex: number | null;
-  embedCodeStartIndex: number | null;
-  embedCodeEndIndex: number | null;
+  embedCodeIndex: number;
+  embedCodeStartIndex: number;
+  embedCodeEndIndex: number;
 }
 
 export interface SelectionEmbedContext {
@@ -32,3 +26,7 @@ export interface EmbedCodeIntersection {
   intersectionType: 'full' | 'partial-start' | 'partial-end' | 'partial-middle';
 }
 
+export interface ActionRequired {
+  selection: boolean;
+  embedCodeIndex: number;
+}

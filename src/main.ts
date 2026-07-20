@@ -25,14 +25,23 @@ function main(): void {
     currentEmbedCodes = embedCodeUtils.findEmbedCodes(textarea.value);
     const actionRequired = embedCodeUtils.isActionIsRequired(textarea, currentEmbedCodes);
 
-    if (actionRequired) {
-        embedFeedback.textContent = "Action required:\nSource: " + source +
-            "\nMethod: " + method +
-            "\nLast Key Pressed: " + lastKeyPressed;
+    if (actionRequired == null) {
+      embedFeedback.textContent = "No action required";
+      return;
+    }
+
+    if (actionRequired.selection) {
+      embedFeedback.textContent = "Action required:\nSource: " + source +
+          "\nMethod: " + method +
+          "\nLast Key Pressed: " + lastKeyPressed;
+      return;
     } else {
-        embedFeedback.textContent = "No action required:\nSource: " + source +
-            "\nMethod: " + method +
-            "\nLast Key Pressed: " + lastKeyPressed;
+        if (source === "Click") {
+          const embedCodeLocation: EmbedCodeLocation = currentEmbedCodes[actionRequired.embedCodeIndex];
+          textarea.focus();
+          textarea.setSelectionRange(embedCodeLocation.endIndex, embedCodeLocation.endIndex);
+          return;
+        }
     }
   }
 
@@ -61,8 +70,8 @@ function main(): void {
 
   // Mouse click: fires after the browser has already moved the caret,
   // so selectionStart/selectionEnd reflect the click position.
-  textarea.addEventListener("click", (event: MouseEvent) => {
-    renderCurrentCaret("Click", `Mouse click at page coordinates (${event.pageX}, ${event.pageY})`);
+  textarea.addEventListener("click", () => {
+    renderCurrentCaret("Click");
   });
 
   // Track key pressed

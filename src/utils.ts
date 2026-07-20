@@ -1,4 +1,10 @@
-import type {EmbedCodeContext, EmbedCodeIntersection, EmbedCodeLocation, SelectionEmbedContext} from "./@types/types";
+import type {
+    ActionRequired,
+    EmbedCodeContext,
+    EmbedCodeIntersection,
+    EmbedCodeLocation,
+    SelectionEmbedContext
+} from "./@types/types";
 import embedRegex from "./regex.js";
 
 /**
@@ -27,7 +33,7 @@ export class EmbedCodeUtils {
     /**
      * Get context information about whether the caret is inside an embed code
      */
-    getEmbedCodeContext(caretIndex: number, embedCodes: EmbedCodeLocation[]): EmbedCodeContext {
+    getEmbedCodeContext(caretIndex: number, embedCodes: EmbedCodeLocation[]): EmbedCodeContext| null {
         for (let i = 0; i < embedCodes.length; i++) {
             const embed = embedCodes[i];
             if (caretIndex > embed.startIndex && caretIndex < embed.endIndex) {
@@ -40,12 +46,7 @@ export class EmbedCodeUtils {
             }
         }
 
-        return {
-            isInEmbedCode: false,
-            embedCodeIndex: null,
-            embedCodeStartIndex: null,
-            embedCodeEndIndex: null
-        };
+        return null;
     }
 
     /**
@@ -95,8 +96,11 @@ export class EmbedCodeUtils {
         };
     }
 
-    isActionIsRequired(textarea: HTMLTextAreaElement, currentEmbedCodes: EmbedCodeLocation[]) {
+    isActionIsRequired(textarea: HTMLTextAreaElement, currentEmbedCodes: EmbedCodeLocation[]): ActionRequired | null {
         const embedContext = this.getEmbedCodeContext(textarea.selectionStart, currentEmbedCodes);
+        if (embedContext == null) {
+            return null;
+        }
         const selectionEnd = textarea.selectionEnd;
         const hasSelection = selectionEnd !== textarea.selectionStart;
 

@@ -74,8 +74,9 @@ function main(): void {
   const log = document.querySelector<HTMLPreElement>("#log");
   const embedFeedback = document.querySelector<HTMLPreElement>("#embedFeedback");
   const parsePerformance = document.querySelector<HTMLPreElement>("#parsePerformance");
+  const caretEmbedStatus = document.querySelector<HTMLElement>("#caretEmbedStatus");
 
-  if (!textarea || !output || !log || !embedFeedback || !parsePerformance) {
+  if (!textarea || !output || !log || !embedFeedback || !parsePerformance || !caretEmbedStatus) {
     console.error("Required elements not found in the page.");
     return;
   }
@@ -117,15 +118,22 @@ function main(): void {
     }
   };
 
-  const renderCurrentCaret = (label: string): void => {
+  const renderCurrentCaret = (label: string, eventDetail?: string): void => {
     const caret = getCaretInfo(textarea, textarea.selectionStart);
     const selectionEnd = textarea.selectionEnd;
     const hasSelection = selectionEnd !== textarea.selectionStart;
 
     let text = formatInfo(label, caret);
     
-    // Add last key pressed
-    text += `\nLast key pressed: ${lastKeyPressed}`;
+    // Show what triggered this update
+    text += `\n\n=== EVENT INFO ===`;
+    text += `\nTriggered by: ${label}`;
+    if (eventDetail) {
+      text += `\nDetails: ${eventDetail}`;
+    }
+    if (label === "Key") {
+      text += `\nKey pressed: ${lastKeyPressed}`;
+    }
 
     // Check if caret is inside an embed code
     const startTime = performance.now();
@@ -142,6 +150,21 @@ function main(): void {
       text += `\nEmbed code range: [${embedContext.embedCodeStartIndex}-${embedContext.embedCodeEndIndex}]`;
     }
 
+    // Update the caret/embed indicator panel next to the Reset button
+    if (embedContext.isInEmbedCode) {
+      let msg = "Yes - ";
+      if (label === "Key") {
+        msg += '"' + lastKeyPressed + '"';
+      } else {
+        msg += " Mouse Click";
+      }
+      caretEmbedStatus.textContent = msg;
+      caretEmbedStatus.style.color = "#00703c";
+    } else {
+      caretEmbedStatus.textContent = "No";
+      caretEmbedStatus.style.color = "#d4351c";
+    }
+
     if (hasSelection) {
       const endCaret = getCaretInfo(textarea, selectionEnd);
       text += `\n\nSelection end: index=${endCaret.index}, line=${endCaret.line}, column=${endCaret.column}`;
@@ -154,7 +177,7 @@ function main(): void {
   // Mouse click: fires after the browser has already moved the caret,
   // so selectionStart/selectionEnd reflect the click position.
   textarea.addEventListener("click", (event: MouseEvent) => {
-    renderCurrentCaret("Click");
+    renderCurrentCaret("Click", `Mouse click at page coordinates (${event.pageX}, ${event.pageY})`);
     appendLog(
       `click at page(${event.pageX}, ${event.pageY}) -> caret index ${textarea.selectionStart}`
     );
@@ -167,18 +190,18 @@ function main(): void {
 
   // Keyboard-driven cursor movement (arrow keys, home/end, typing, etc).
   textarea.addEventListener("keyup", () => {
-    renderCurrentCaret("Key");
+    renderCurrentCaret("Key", `Keyboard interaction`);
   });
 
   // Catches selection changes not covered above (e.g. select-all via menu,
   // drag-selecting with the mouse).
   document.addEventListener("selectionchange", () => {
     if (document.activeElement !== textarea) return;
-    renderCurrentCaret("Selection");
+    renderCurrentCaret("Selection", "Selection changed (drag-select, select-all, or other)");
   });
 
   textarea.addEventListener("focus", () => {
-    renderCurrentCaret("Focus");
+    renderCurrentCaret("Focus", "Textarea received focus (tab, click, or programmatic)");
     appendLog("textarea focused");
   });
 

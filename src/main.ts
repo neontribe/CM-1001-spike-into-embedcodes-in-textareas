@@ -154,7 +154,7 @@ function main(): void {
     if (embedContext.isInEmbedCode) {
       let msg = "Yes - ";
       if (label === "Key") {
-        msg += '"' + lastKeyPressed + '"';
+        msg += lastKeyPressed;
       } else {
         msg += " Mouse Click";
       }

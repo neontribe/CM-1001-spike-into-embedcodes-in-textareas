@@ -37,17 +37,21 @@ function main(): void {
           "\nLast Key Pressed: " + lastKeyPressed;
       return;
     } else {
-      if ((source === "Click") || (source === "keyup" && lastKeyPressed === "ArrowRight")) {
+      if ((source === "Click") || (source === "keyup" && (lastKeyPressed === "ArrowRight" || lastKeyPressed === "ArrowDown"))) {
         const embedCodeLocation: EmbedCodeLocation = currentEmbedCodes[actionRequired.embedCodeIndex];
         textarea.focus();
         textarea.setSelectionRange(embedCodeLocation.endIndex, embedCodeLocation.endIndex);
         return;
       }
-      else if (source === "keyup" && lastKeyPressed === "ArrowLeft") {
+      else if (source === "keyup" && (lastKeyPressed === "ArrowLeft" || lastKeyPressed === "ArrowUp")) {
         const embedCodeLocation: EmbedCodeLocation = currentEmbedCodes[actionRequired.embedCodeIndex];
         textarea.focus();
         textarea.setSelectionRange(embedCodeLocation.startIndex, embedCodeLocation.startIndex);
         return;
+      } else if (source === "keyup" && lastKeyPressed === "Backspace") {
+
+      } else if (source === "keyup" && lastKeyPressed === "Delete") {
+
       }
       else {
         embedFeedback.textContent = "Action required:\nSource: " + source +

@@ -44,7 +44,6 @@
 </head>
 <body>
   <h1>Embedcode as a character PoC</h1>
-  <p>Click inside the textarea, move the cursor with arrow keys, or select text (via mouse drag or Shift+cursor keys). The panels below update with the caret position and detect embed codes within selections.</p>
 
   <div style="margin-bottom: 1rem; padding: 0.75rem; background: #f8f8f8; border: 1px solid #b1b4b6;">
     <label for="embedCount" style="margin-right: 0.5rem;">Number of embed codes to inject:</label>
@@ -71,7 +70,7 @@ In conclusion, the finalized amalgamation of these disparate operational workflo
 
   <div style="display: flex; gap: 1rem; margin-bottom: 1rem">
     <section style="flex: 1">
-      <h2>Embed Codes Found</h2>
+      <h2>Debug Embed CodesInfo</h2>
       <pre id="embedFeedback" style="background: #e8f4f8; border-color: #005ea5; color: #0b0c0c;">Scanning...</pre>
     </section>
 
@@ -88,11 +87,15 @@ In conclusion, the finalized amalgamation of these disparate operational workflo
         <li>[X] Mouse click jumps to end</li>
         <li>[X] Right cursor jumps to end</li>
         <li>[X] Left cursor jumps to beginning</li>
+        <li>[ ] Up cursor jumps to end</li>
+        <li>[ ] Down cursor jumps to beginning</li>
         <li>[ ] Delete/backspace removes entire code</li>
         <li>[ ] Mouse selection LTR jumps to end</li>
         <li>[ ] Mouse selection RTL jumps to beginning</li>
         <li>[ ] Keyboard selection LTR jumps to end</li>
         <li>[ ] Keyboard selection RTL jumps to beginning</li>
+        <li>[ ] Keyboard selection down jumps to end</li>
+        <li>[ ] Keyboard selection up jumps to beginning</li>
         <li>[ ] Double click selects entire code</li>
       </ul>
     </section>

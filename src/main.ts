@@ -21,7 +21,8 @@ function main(): void {
   let lastSelectionMethod: string = "unknown";
   let isShiftPressed: boolean = false;
 
-  const renderCurrentCaret = (source: string, method?: string): void => {
+  const checkAndUpdateCaretPosition = (source: string, method?: string): void => {
+    const startTime = performance.now();
     currentEmbedCodes = embedCodeUtils.findEmbedCodes(textarea.value);
     const actionRequired = embedCodeUtils.isActionIsRequired(textarea, currentEmbedCodes);
 
@@ -54,6 +55,8 @@ function main(): void {
             "\nLast Key Pressed: " + lastKeyPressed;
       }
     }
+    const endTime = performance.now();
+    parsePerformance.textContent = `Checking ${currentEmbedCodes.length} codes took ${endTime - startTime} ms`;
   }
 
   // Track mouse down/up for drag detection
@@ -82,7 +85,7 @@ function main(): void {
   // Mouse click: fires after the browser has already moved the caret,
   // so selectionStart/selectionEnd reflect the click position.
   textarea.addEventListener("click", () => {
-    renderCurrentCaret("Click");
+    checkAndUpdateCaretPosition("Click");
   });
 
   // Track key pressed
@@ -107,7 +110,7 @@ function main(): void {
       method = lastSelectionMethod;
     }
     
-    renderCurrentCaret("Key", method);
+    checkAndUpdateCaretPosition("Key", method);
   });
 
   // Catches selection changes not covered above (e.g. select-all via menu,
@@ -126,33 +129,33 @@ function main(): void {
       }
     }
     
-    renderCurrentCaret("Selection", method);
+    checkAndUpdateCaretPosition("Selection", method);
   });
 
   textarea.addEventListener("focus", () => {
-    renderCurrentCaret("Focus");
+    checkAndUpdateCaretPosition("Focus");
   });
 
   // Detect text changes and find embed-codes-multiple events to catch all changes
   textarea.addEventListener("input", () => {
-    renderCurrentCaret("input");
+    checkAndUpdateCaretPosition("input");
   });
 
   textarea.addEventListener("change", () => {
-    renderCurrentCaret("Change event triggered");
+    checkAndUpdateCaretPosition("Change event triggered");
   });
 
   textarea.addEventListener("keyup", () => {
-    renderCurrentCaret("keyup");
+    checkAndUpdateCaretPosition("keyup");
   });
 
   textarea.addEventListener("paste", () => {
     // Paste needs a small delay to get the updated value
-    setTimeout(() => renderCurrentCaret("paste"), 0);
+    setTimeout(() => checkAndUpdateCaretPosition("paste"), 0);
   });
 
   // Initial scan on page load
-  renderCurrentCaret("Running initial embed code scan");
+  checkAndUpdateCaretPosition("Running initial embed code scan");
 }
 
 document.addEventListener("DOMContentLoaded", main);
